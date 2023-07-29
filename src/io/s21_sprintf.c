@@ -8,6 +8,7 @@ typedef struct {
   int width;
   int precision;
   int counter;
+  char width_filler;
   unsigned short plus_f : 1;
   unsigned short minus_f : 1;
   unsigned short space_f : 1;
@@ -29,7 +30,8 @@ char *s21_print_float(char *str, long double floating, arg_info *info);
 char *s21_print_char(char *str, int ch, arg_info *info);
 char *s21_print_str(char *str, char *in_str, arg_info *info);
 
-int s21_fill(char *str, char c, char right, int width, int counter);
+int s21_fill(char *str, char c, char right, char offset, int width,
+             int counter);
 long double s21_align_sign(char *str, long double value, arg_info *info);
 
 int s21_int_to_str(char *str, long double value);
@@ -48,6 +50,7 @@ int s21_sprintf(char *str, const char *format, ...) {
   for (; !error && *format; format++, str++) {
     if (*format == '%') {
       arg_info info = {0};
+      info.width_filler = ' ';
       info.precision = -1;
       format = s21_parse_flags(format + 1, &info);
       format = s21_parse_width(format, &info);
@@ -108,7 +111,7 @@ char *s21_print_char(char *str, int ch, arg_info *info) {
   *str = (char)ch;
   info->counter = 1;
   info->counter +=
-      s21_fill(str, ' ', info->minus_f, info->width, info->counter);
+      s21_fill(str, ' ', info->minus_f, 0, info->width, info->counter);
   return str + info->counter - 1;
 }
 
@@ -118,11 +121,13 @@ char *s21_print_int(char *str, long double integral, arg_info *info) {
     info->counter += s21_int_to_str(str + info->offset, integral);
     if (info->precision > 0)
       info->counter +=
-          s21_fill(str + info->offset, '0', 0, info->precision, info->counter);
+          s21_fill(str + info->offset, '0', 0, info->offset & info->zero_f,
+                   info->precision, info->counter);
     info->counter += info->offset;
   }
   info->counter +=
-      s21_fill(str, ' ', info->minus_f, info->width, info->counter);
+      s21_fill(str, info->width_filler, info->minus_f,
+               info->offset & info->zero_f, info->width, info->counter);
   return str + info->counter - 1;
 }
 
@@ -160,7 +165,8 @@ char *s21_print_float(char *str, long double floating, arg_info *info) {
     info->counter += info->precision;
   }
   info->counter +=
-      s21_fill(str, ' ', info->minus_f, info->width, info->counter);
+      s21_fill(str, info->width_filler, info->minus_f,
+               info->offset & info->zero_f, info->width, info->counter);
   return str + info->counter - 1;
 }
 
@@ -168,7 +174,7 @@ char *s21_print_str(char *str, char *in_str, arg_info *info) {
   info->counter = (int)s21_strlen(in_str);
   s21_memcpy(str, in_str, info->counter);
   info->counter +=
-      s21_fill(str, ' ', info->minus_f, info->width, info->counter);
+      s21_fill(str, ' ', info->minus_f, 0, info->width, info->counter);
   return str + info->counter - 1;
 }
 
@@ -203,15 +209,16 @@ long double s21_frac_to_int(long double value, int precision) {
   return value;
 }
 
-int s21_fill(char *str, char c, char right, int width, int counter) {
+int s21_fill(char *str, char c, char right, char offset, int width,
+             int counter) {
   int shift = 0;
   if (width > counter) {
     shift = width - counter;
     if (right) {
       s21_memset(str + counter, c, shift);
     } else {
-      s21_rshift(str, str + counter, shift);
-      s21_memset(str, c, shift);
+      s21_rshift(str + offset, str + counter, shift);
+      s21_memset(str + offset, c, shift);
     }
   }
   return shift;
@@ -288,5 +295,7 @@ const char *s21_parse_flags(const char *format, arg_info *info) {
         break;
     }
   }
+  if (info->minus_f) info->zero_f = 0;
+  if (info->zero_f) info->width_filler = '0';
   return format;
 }

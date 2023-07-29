@@ -77,6 +77,24 @@ START_TEST(d_format_width_right_0) {
 }
 END_TEST
 
+START_TEST(d_format_zero_width) {
+  common_test(sprintf(orig_res, "abc%05ddfc", 34),
+              s21_sprintf(s21_res, "abc%05ddfc", 34));
+}
+END_TEST
+
+START_TEST(d_format_offset_zero_width_0) {
+  common_test(sprintf(orig_res, "abc%05ddfc", -34),
+              s21_sprintf(s21_res, "abc%05ddfc", -34));
+}
+END_TEST
+
+START_TEST(d_format_offset_zero_width_1) {
+  common_test(sprintf(orig_res, "abc%+05ddfc", 34),
+              s21_sprintf(s21_res, "abc%+05ddfc", 34));
+}
+END_TEST
+
 START_TEST(d_format_width_right_1) {
   common_test(sprintf(orig_res, "prefix%5d", -255),
               s21_sprintf(s21_res, "prefix%5d", -255));
@@ -258,6 +276,24 @@ START_TEST(f_format_width_left_1) {
 }
 END_TEST
 
+START_TEST(f_format_zero_width) {
+  common_test(sprintf(orig_res, "abc%05fdfc", 2.3),
+              s21_sprintf(s21_res, "abc%05fdfc", 2.3));
+}
+END_TEST
+
+START_TEST(f_format_zero_width_offset_0) {
+  common_test(sprintf(orig_res, "abc%05fdfc", -2.3),
+              s21_sprintf(s21_res, "abc%05fdfc", -2.3));
+}
+END_TEST
+
+START_TEST(f_format_zero_width_offset_1) {
+  common_test(sprintf(orig_res, "abc%0+7fdfc", 2.3),
+              s21_sprintf(s21_res, "abc%0+7fdfc", 2.3));
+}
+END_TEST
+
 START_TEST(f_format_sign_space_0) {
   common_test(sprintf(orig_res, "% f", 3.2), s21_sprintf(s21_res, "% f", 3.2));
 }
@@ -392,6 +428,9 @@ Suite *s21_sprintf_suite() {
   tcase_add_test(tc_d, d_format_width_left_1);
   tcase_add_test(tc_d, d_format_width_right_0);
   tcase_add_test(tc_d, d_format_width_right_1);
+  tcase_add_test(tc_d, d_format_zero_width);
+  tcase_add_test(tc_d, d_format_offset_zero_width_0);
+  tcase_add_test(tc_d, d_format_offset_zero_width_1);
   tcase_add_test(tc_d, d_format_sign_space_0);
   tcase_add_test(tc_d, d_format_sign_space_1);
   tcase_add_test(tc_d, d_format_sign_plus_0);
@@ -427,6 +466,9 @@ Suite *s21_sprintf_suite() {
   tcase_add_test(tc_f, f_format_width_right_1);
   tcase_add_test(tc_f, f_format_width_left_0);
   tcase_add_test(tc_f, f_format_width_left_1);
+  tcase_add_test(tc_f, f_format_zero_width);
+  tcase_add_test(tc_f, f_format_zero_width_offset_0);
+  tcase_add_test(tc_f, f_format_zero_width_offset_1);
   tcase_add_test(tc_f, f_format_sign_space_0);
   tcase_add_test(tc_f, f_format_sign_space_1);
   tcase_add_test(tc_f, f_format_sign_plus_0);
