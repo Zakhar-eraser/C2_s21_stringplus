@@ -27,9 +27,12 @@ const char *s21_parse_length(const char *format, arg_info *info);
 const char *s21_parse_ulong_variants(const char *format, va_list args,
                                      int *out);
 char *s21_insert_arg(char *str, char spec, arg_info *info, va_list args);
+long double s21_float_read(arg_info *info, va_list args);
 
 char *s21_print_int(char *str, long double integral, arg_info *info);
 char *s21_print_float(char *str, long double floating, arg_info *info);
+char *s21_print_scientific(char *str, long double value, char E,
+                           arg_info *info);
 char *s21_print_char(char *str, int ch, arg_info *info);
 char *s21_print_str(char *str, char *in_str, arg_info *info);
 
@@ -93,12 +96,11 @@ char *s21_insert_arg(char *str, char spec, arg_info *info, va_list args) {
           str, s21_input_unsigned_int(info->h_l, info->l_l, args), info);
       break;
     case 'f':
-      if (info->precision == -1) info->precision = 6;
-      if (info->L_l) {
-        str = s21_print_float(str, va_arg(args, long double), info);
-      } else {
-        str = s21_print_float(str, va_arg(args, double), info);
-      }
+      str = s21_print_float(str, s21_float_read(info, args), info);
+      break;
+    case 'e':
+      break;
+    case 'E':
       break;
     case 's':
       str = s21_print_str(str, va_arg(args, char *), info);
@@ -173,12 +175,28 @@ char *s21_print_float(char *str, long double floating, arg_info *info) {
   return str + info->counter - 1;
 }
 
+long double s21_float_read(arg_info *info, va_list args) {
+  if (info->precision == -1) info->precision = 6;
+  long double result;
+  if (info->L_l)
+    result = va_arg(args, long double);
+  else
+    result = va_arg(args, double);
+  return result;
+}
+
 char *s21_print_str(char *str, char *in_str, arg_info *info) {
   info->counter = (int)s21_strlen(in_str);
   s21_memcpy(str, in_str, info->counter);
   info->counter +=
       s21_fill(str, ' ', info->minus_f, 0, info->width, info->counter);
   return str + info->counter - 1;
+}
+
+char *s21_print_scientific(char *str, long double value, char E,
+                           arg_info *info) {
+  int exp = (int)floorl(log10l(value));
+  
 }
 
 int s21_int_to_str(char *str, long double value) {
