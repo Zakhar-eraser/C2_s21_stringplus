@@ -1,0 +1,60 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build debug",
+            "type": "shell",
+            "command": "make",
+            "group": "build",
+            "args": ["debug"],
+            "detail": "Make debug build task",
+            "options": {
+                "cwd": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "label": "Build test",
+            "type": "shell",
+            "command": "make",
+            "group": "build",
+            "args": ["test"],
+            "detail": "Make test build task",
+            "options": {
+                "cwd": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "label": "Test",
+            "type": "shell",
+            "dependsOn": ["Build test"],
+            "command": "./s21_string_test.out",
+            "group": "test",
+            "detail": "Test",
+            "options": {
+                "cwd": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "label": "Build debug test",
+            "type": "shell",
+            "command": "make",
+            "group": "build",
+            "args": ["test_debug"],
+            "detail": "Make test debug build task",
+            "options": {
+                "cwd": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "label": "Memcheck valgrind",
+            "type": "shell",
+            "dependsOn": ["Build debug test"],
+            "command": "valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose ./s21_string_test.out",
+            "group": "test",
+            "detail": "Test with valgrind",
+            "options": {
+                "cwd": "${workspaceFolder}/src"
+            }
+        },
+    ]
+}

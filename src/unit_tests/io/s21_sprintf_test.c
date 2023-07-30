@@ -29,9 +29,16 @@ START_TEST(c_format_width_left) {
 }
 END_TEST
 
+START_TEST(c_format_width_from_input) {
+  common_test(sprintf(orig_res, "%-*csuffix", 5, '|'),
+              s21_sprintf(s21_res, "%-*csuffix", 5, '|'));
+}
+END_TEST
+
 START_TEST(c_format_multiple) {
-  common_test(sprintf(orig_res, "1%-5c 2%1c3 %-10cf", 'a', 'b', 'c'),
-              s21_sprintf(s21_res, "1%-5c 2%1c3 %-10cf", 'a', 'b', 'c'));
+  common_test(
+      sprintf(orig_res, "1%-5c 2%*c 2%1c3 %-10cf", 'a', 3, '3', 'b', 'c'),
+      s21_sprintf(s21_res, "1%-5c 2%*c 2%1c3 %-10cf", 'a', 3, '3', 'b', 'c'));
 }
 END_TEST
 
@@ -80,6 +87,12 @@ END_TEST
 START_TEST(d_format_zero_width) {
   common_test(sprintf(orig_res, "abc%05ddfc", 34),
               s21_sprintf(s21_res, "abc%05ddfc", 34));
+}
+END_TEST
+
+START_TEST(d_format_zero_width_from_input) {
+  common_test(sprintf(orig_res, "abc%0*ddfc", 5, 34),
+              s21_sprintf(s21_res, "abc%0*ddfc", 5, 34));
 }
 END_TEST
 
@@ -137,6 +150,18 @@ END_TEST
 START_TEST(d_format_precision_0) {
   common_test(sprintf(orig_res, "%7.5d", -255),
               s21_sprintf(s21_res, "%7.5d", -255));
+}
+END_TEST
+
+START_TEST(d_format_precision_from_input) {
+  common_test(sprintf(orig_res, "%7.*d", 5, -255),
+              s21_sprintf(s21_res, "%7.*d", 5, -255));
+}
+END_TEST
+
+START_TEST(d_format_width_precision_from_input) {
+  common_test(sprintf(orig_res, "%*.*d", 7, 5, -255),
+              s21_sprintf(s21_res, "%*.*d", 7, 5, -255));
 }
 END_TEST
 
@@ -214,6 +239,12 @@ START_TEST(u_format_width_left_1) {
 }
 END_TEST
 
+START_TEST(u_format_zero_width_from_input) {
+  common_test(sprintf(orig_res, "%0*usuffix", 5, 255),
+              s21_sprintf(s21_res, "%0*usuffix", 5, 255));
+}
+END_TEST
+
 START_TEST(u_format_precision_0) {
   common_test(sprintf(orig_res, "%7.5u", 255),
               s21_sprintf(s21_res, "%7.5u", 255));
@@ -222,6 +253,18 @@ END_TEST
 
 START_TEST(u_format_precision_1) {
   common_test(sprintf(orig_res, "%2.0u", 0), s21_sprintf(s21_res, "%2.0u", 0));
+}
+END_TEST
+
+START_TEST(u_format_precision_from_input) {
+  common_test(sprintf(orig_res, "%7.*u", 5, 255),
+              s21_sprintf(s21_res, "%7.*u", 5, 255));
+}
+END_TEST
+
+START_TEST(u_format_width_precision_from_input) {
+  common_test(sprintf(orig_res, "%*.*u", 7, 5, 255),
+              s21_sprintf(s21_res, "%*.*u", 7, 5, 255));
 }
 END_TEST
 
@@ -282,6 +325,12 @@ START_TEST(f_format_zero_width) {
 }
 END_TEST
 
+START_TEST(f_format_zero_width_from_input) {
+  common_test(sprintf(orig_res, "abc%0*fdfc", 5, 2.3),
+              s21_sprintf(s21_res, "abc%0*fdfc", 5, 2.3));
+}
+END_TEST
+
 START_TEST(f_format_zero_width_offset_0) {
   common_test(sprintf(orig_res, "abc%05fdfc", -2.3),
               s21_sprintf(s21_res, "abc%05fdfc", -2.3));
@@ -328,6 +377,18 @@ START_TEST(f_format_precision_1) {
 }
 END_TEST
 
+START_TEST(f_format_precision_from_input) {
+  common_test(sprintf(orig_res, "%7.*f", 4, -2.55345),
+              s21_sprintf(s21_res, "%7.*f", 4, -2.55345));
+}
+END_TEST
+
+START_TEST(f_format_width_precision_from_input) {
+  common_test(sprintf(orig_res, "%*.*f", 7, 4, -2.55345),
+              s21_sprintf(s21_res, "%*.*f", 7, 4, -2.55345));
+}
+END_TEST
+
 START_TEST(f_format_precision_2) {
   common_test(sprintf(orig_res, "%7.4f", -2.55355),
               s21_sprintf(s21_res, "%7.4f", -2.55355));
@@ -370,10 +431,10 @@ START_TEST(f_format_inf_3) {
 END_TEST
 
 START_TEST(f_format_multiple) {
-  common_test(sprintf(orig_res, "123% -17Lf 456%+-12.1f %9.1f, %2f",
-                      124532562623543532.L, 4325.46, NAN, -INFINITY),
-              s21_sprintf(s21_res, "123% -17Lf 456%+-12.1f %9.1f, %2f",
-                          124532562623543532.L, 4325.46, NAN, -INFINITY));
+  common_test(sprintf(orig_res, "123% -17Lf 456%+-12.1f %9.1f, %*f",
+                      124532562623543532.L, 4325.46, NAN, 2, -INFINITY),
+              s21_sprintf(s21_res, "123% -17Lf 456%+-12.1f %9.1f, %*f",
+                          124532562623543532.L, 4325.46, NAN, 2, -INFINITY));
 }
 END_TEST
 
@@ -414,6 +475,7 @@ Suite *s21_sprintf_suite() {
   tcase_add_test(tc_c, c_format_single);
   tcase_add_test(tc_c, c_format_width_right);
   tcase_add_test(tc_c, c_format_width_left);
+  tcase_add_test(tc_c, c_format_width_from_input);
   tcase_add_test(tc_c, c_format_multiple);
   suite_add_tcase(s, tc_c);
 
@@ -429,6 +491,7 @@ Suite *s21_sprintf_suite() {
   tcase_add_test(tc_d, d_format_width_right_0);
   tcase_add_test(tc_d, d_format_width_right_1);
   tcase_add_test(tc_d, d_format_zero_width);
+  tcase_add_test(tc_d, d_format_zero_width_from_input);
   tcase_add_test(tc_d, d_format_offset_zero_width_0);
   tcase_add_test(tc_d, d_format_offset_zero_width_1);
   tcase_add_test(tc_d, d_format_sign_space_0);
@@ -437,7 +500,8 @@ Suite *s21_sprintf_suite() {
   tcase_add_test(tc_d, d_format_sign_plus_1);
   tcase_add_test(tc_d, d_format_precision_0);
   tcase_add_test(tc_d, d_format_precision_1);
-  tcase_add_test(tc_d, d_format_precision_0);
+  tcase_add_test(tc_d, d_format_precision_from_input);
+  tcase_add_test(tc_d, d_format_width_precision_from_input);
   tcase_add_test(tc_d, d_format_multiple);
   suite_add_tcase(s, tc_d);
 
@@ -452,9 +516,11 @@ Suite *s21_sprintf_suite() {
   tcase_add_test(tc_u, u_format_width_left_1);
   tcase_add_test(tc_u, u_format_width_right_0);
   tcase_add_test(tc_u, u_format_width_right_1);
+  tcase_add_test(tc_u, u_format_zero_width_from_input);
   tcase_add_test(tc_u, u_format_precision_0);
   tcase_add_test(tc_u, u_format_precision_1);
-  tcase_add_test(tc_u, u_format_precision_0);
+  tcase_add_test(tc_u, u_format_precision_from_input);
+  tcase_add_test(tc_u, u_format_width_precision_from_input);
   tcase_add_test(tc_u, u_format_multiple);
   suite_add_tcase(s, tc_u);
 
@@ -467,6 +533,7 @@ Suite *s21_sprintf_suite() {
   tcase_add_test(tc_f, f_format_width_left_0);
   tcase_add_test(tc_f, f_format_width_left_1);
   tcase_add_test(tc_f, f_format_zero_width);
+  tcase_add_test(tc_f, f_format_zero_width_from_input);
   tcase_add_test(tc_f, f_format_zero_width_offset_0);
   tcase_add_test(tc_f, f_format_zero_width_offset_1);
   tcase_add_test(tc_f, f_format_sign_space_0);
@@ -476,6 +543,8 @@ Suite *s21_sprintf_suite() {
   tcase_add_test(tc_f, f_format_precision_0);
   tcase_add_test(tc_f, f_format_precision_1);
   tcase_add_test(tc_f, f_format_precision_2);
+  tcase_add_test(tc_f, f_format_precision_from_input);
+  tcase_add_test(tc_f, f_format_width_precision_from_input);
   tcase_add_test(tc_f, f_format_nan_0);
   tcase_add_test(tc_f, f_format_nan_3);
   tcase_add_test(tc_f, f_format_inf_0);

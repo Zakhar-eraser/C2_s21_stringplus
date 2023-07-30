@@ -20,9 +20,12 @@ typedef struct {
 } arg_info;
 
 const char *s21_parse_flags(const char *format, arg_info *info);
-const char *s21_parse_width(const char *format, arg_info *info);
-const char *s21_parse_precision(const char *format, arg_info *info);
+const char *s21_parse_width(const char *format, arg_info *info, va_list args);
+const char *s21_parse_precision(const char *format, arg_info *info,
+                                va_list args);
 const char *s21_parse_length(const char *format, arg_info *info);
+const char *s21_parse_ulong_variants(const char *format, va_list args,
+                                     int *out);
 char *s21_insert_arg(char *str, char spec, arg_info *info, va_list args);
 
 char *s21_print_int(char *str, long double integral, arg_info *info);
@@ -53,8 +56,8 @@ int s21_sprintf(char *str, const char *format, ...) {
       info.width_filler = ' ';
       info.precision = -1;
       format = s21_parse_flags(format + 1, &info);
-      format = s21_parse_width(format, &info);
-      format = s21_parse_precision(format, &info);
+      format = s21_parse_width(format, &info, args);
+      format = s21_parse_precision(format, &info, args);
       format = s21_parse_length(format, &info);
       str = s21_insert_arg(str, *format, &info, args);
       if (info.counter < 0) {
@@ -258,19 +261,27 @@ char s21_set_double_length(const char **pformat) {
   return out;
 }
 
-const char *s21_parse_precision(const char *format, arg_info *info) {
-  if (*format == '.') {
-    long double result;
-    format = s21_read_int(format + 1, &result);
-    info->precision = (s21_size_t)result;
-  }
+const char *s21_parse_precision(const char *format, arg_info *info,
+                                va_list args) {
+  if (*format == '.')
+    format = s21_parse_ulong_variants(format + 1, args, &info->precision);
   return format;
 }
 
-const char *s21_parse_width(const char *format, arg_info *info) {
-  long double result;
-  format = s21_read_int(format, &result);
-  info->width = (s21_size_t)result;
+const char *s21_parse_width(const char *format, arg_info *info, va_list args) {
+  return s21_parse_ulong_variants(format, args, &info->width);
+}
+
+const char *s21_parse_ulong_variants(const char *format, va_list args,
+                                     int *out) {
+  if (*format == '*') {
+    *out = (int)va_arg(args, unsigned int);
+    format++;
+  } else {
+    long double result;
+    format = s21_read_int(format, &result);
+    *out = result;
+  }
   return format;
 }
 
