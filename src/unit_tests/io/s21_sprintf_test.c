@@ -456,6 +456,20 @@ START_TEST(s_format_2) {
 }
 END_TEST
 
+START_TEST(e_format) {
+  const char* format = "%e";
+  common_test(sprintf(orig_res, format, 56000004.2),
+              s21_sprintf(s21_res, format, 56000004.2));
+}
+END_TEST
+
+START_TEST(e_format_zero) {
+  const char* format = "%e";
+  common_test(sprintf(orig_res, format, 0),
+              s21_sprintf(s21_res, format, 0));
+}
+END_TEST
+
 START_TEST(common) {
   common_test(sprintf(orig_res, "%-20ssuffix%-5hhu - % .10f, %4.0d", "_fix_",
                       (unsigned char)255, 12.3453235654956, 0),
@@ -559,6 +573,11 @@ Suite *s21_sprintf_suite() {
   tcase_add_test(tc_s, s_format_1);
   tcase_add_test(tc_s, s_format_2);
   suite_add_tcase(s, tc_s);
+
+  TCase *tc_e = tcase_create("E");
+  tcase_add_test(tc_e, e_format);
+  tcase_add_test(tc_e, e_format_zero);
+  suite_add_tcase(s, tc_e);
 
   TCase *tc_common = tcase_create("COMMON");
   tcase_add_test(tc_common, common);

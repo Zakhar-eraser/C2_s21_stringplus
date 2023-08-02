@@ -99,8 +99,8 @@ char *s21_insert_arg(char *str, char spec, arg_info *info, va_list args) {
       str = s21_print_float(str, s21_float_read(info, args), info);
       break;
     case 'e':
-      break;
     case 'E':
+      str = s21_print_scientific(str, s21_float_read(info, args), spec, info);
       break;
     case 's':
       str = s21_print_str(str, va_arg(args, char *), info);
@@ -196,7 +196,11 @@ char *s21_print_str(char *str, char *in_str, arg_info *info) {
 char *s21_print_scientific(char *str, long double value, char E,
                            arg_info *info) {
   int exp = (int)floorl(log10l(value));
-  
+  long double man = value / powl(10, exp);
+  str = s21_print_float(str, man, info) + 1;
+  info->counter++;
+  *(str++) = E;
+  return s21_print_int(str, exp, info);
 }
 
 int s21_int_to_str(char *str, long double value) {
