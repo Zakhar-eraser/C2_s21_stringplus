@@ -29,12 +29,11 @@ const char *s21_parse_ulong_variants(const char *format, va_list args,
 char *s21_insert_arg(char *str, char spec, arg_info *info, va_list args);
 long double s21_float_read(arg_info *info, va_list args);
 
-char *s21_print_int(char *str, long double integral, arg_info *info);
-char *s21_print_float(char *str, long double floating, arg_info *info);
-char *s21_print_scientific(char *str, long double value, char E,
-                           arg_info *info);
-char *s21_print_char(char *str, int ch, arg_info *info);
-char *s21_print_str(char *str, char *in_str, arg_info *info);
+void s21_print_int(char *str, long double integral, arg_info *info);
+void s21_print_float(char *str, long double floating, arg_info *info);
+void s21_print_scientific(char *str, long double value, char E, arg_info *info);
+void s21_print_char(char *str, int ch, arg_info *info);
+void s21_print_str(char *str, char *in_str, arg_info *info);
 
 int s21_fill(char *str, char c, char right, char offset, int width,
              int counter);
@@ -83,44 +82,45 @@ int s21_sprintf(char *str, const char *format, ...) {
 char *s21_insert_arg(char *str, char spec, arg_info *info, va_list args) {
   switch (spec) {
     case 'c':
-      str = s21_print_char(str, va_arg(args, int), info);
+      s21_print_char(str, va_arg(args, int), info);
       break;
     case 'd':
-      str =
-          s21_print_int(str, s21_input__int(info->h_l, info->l_l, args), info);
+      s21_print_int(str, s21_input__int(info->h_l, info->l_l, args), info);
       break;
     case 'u':
       info->space_f = 0;
       info->plus_f = 0;
-      str = s21_print_int(
-          str, s21_input_unsigned_int(info->h_l, info->l_l, args), info);
+      s21_print_int(str, s21_input_unsigned_int(info->h_l, info->l_l, args),
+                    info);
       break;
     case 'f':
-      str = s21_print_float(str, s21_float_read(info, args), info);
+      s21_print_float(str, s21_float_read(info, args), info);
       break;
     case 'e':
     case 'E':
-      str = s21_print_scientific(str, s21_float_read(info, args), spec, info);
+      s21_print_scientific(str, s21_float_read(info, args), spec, info);
       break;
     case 's':
-      str = s21_print_str(str, va_arg(args, char *), info);
+      s21_print_str(str, va_arg(args, char *), info);
       break;
     default:
       info->counter = -1;
       break;
   }
-  return str;
-}
-
-char *s21_print_char(char *str, int ch, arg_info *info) {
-  *str = (char)ch;
-  info->counter = 1;
-  info->counter +=
-      s21_fill(str, ' ', info->minus_f, 0, info->width, info->counter);
+  info->counter += s21_fill(str, info->width_filler, info->minus_f,
+                       info->offset & info->zero_f, info->width,
+                       info->counter);
   return str + info->counter - 1;
 }
 
-char *s21_print_int(char *str, long double integral, arg_info *info) {
+void s21_print_char(char *str, int ch, arg_info *info) {
+  *str = (char)ch;
+  info->width_filler = ' ';
+  info->offset = 0;
+  info->counter = 1;
+}
+
+void s21_print_int(char *str, long double integral, arg_info *info) {
   if (integral || info->precision) {
     integral = s21_align_sign(str, integral, info);
     info->counter += s21_int_to_str(str + info->offset, integral);
@@ -130,10 +130,6 @@ char *s21_print_int(char *str, long double integral, arg_info *info) {
                    info->precision, info->counter);
     info->counter += info->offset;
   }
-  info->counter +=
-      s21_fill(str, info->width_filler, info->minus_f,
-               info->offset & info->zero_f, info->width, info->counter);
-  return str + info->counter - 1;
 }
 
 long double s21_align_sign(char *str, long double value, arg_info *info) {
@@ -151,7 +147,7 @@ long double s21_align_sign(char *str, long double value, arg_info *info) {
   return value;
 }
 
-char *s21_print_float(char *str, long double floating, arg_info *info) {
+void s21_print_float(char *str, long double floating, arg_info *info) {
   floating = s21_align_sign(str + info->offset, floating, info);
   info->counter += info->offset;
   if (isnan(floating)) {
@@ -169,10 +165,6 @@ char *s21_print_float(char *str, long double floating, arg_info *info) {
     s21_int_to_str(str + info->counter, frac);
     info->counter += info->precision;
   }
-  info->counter +=
-      s21_fill(str, info->width_filler, info->minus_f,
-               info->offset & info->zero_f, info->width, info->counter);
-  return str + info->counter - 1;
 }
 
 long double s21_float_read(arg_info *info, va_list args) {
@@ -185,22 +177,22 @@ long double s21_float_read(arg_info *info, va_list args) {
   return result;
 }
 
-char *s21_print_str(char *str, char *in_str, arg_info *info) {
+void s21_print_str(char *str, char *in_str, arg_info *info) {
   info->counter = (int)s21_strlen(in_str);
   s21_memcpy(str, in_str, info->counter);
-  info->counter +=
-      s21_fill(str, ' ', info->minus_f, 0, info->width, info->counter);
-  return str + info->counter - 1;
+  info->offset = 0;
+  info->width_filler = ' ';
 }
 
-char *s21_print_scientific(char *str, long double value, char E,
+void s21_print_scientific(char *str, long double value, char E,
                            arg_info *info) {
   int exp = (int)floorl(log10l(value));
   long double man = value / powl(10, exp);
-  str = s21_print_float(str, man, info) + 1;
-  info->counter++;
-  *(str++) = E;
-  return s21_print_int(str, exp, info);
+  s21_print_float(str, man, info);
+  *(str + info->counter++) = E;
+  arg_info local_info = {.plus_f = 1, .precision = 2};
+  s21_print_int(str + info->counter, exp, &local_info);
+  info->counter += local_info.counter;
 }
 
 int s21_int_to_str(char *str, long double value) {

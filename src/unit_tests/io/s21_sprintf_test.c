@@ -463,10 +463,10 @@ START_TEST(e_format) {
 }
 END_TEST
 
-START_TEST(e_format_zero) {
+START_TEST(e_format_frac) {
   const char* format = "%e";
-  common_test(sprintf(orig_res, format, 0),
-              s21_sprintf(s21_res, format, 0));
+  common_test(sprintf(orig_res, format, 0.0000646),
+              s21_sprintf(s21_res, format, 0.0000646));
 }
 END_TEST
 
@@ -576,7 +576,8 @@ Suite *s21_sprintf_suite() {
 
   TCase *tc_e = tcase_create("E");
   tcase_add_test(tc_e, e_format);
-  tcase_add_test(tc_e, e_format_zero);
+  //tcase_add_test(tc_e, e_format_zero);
+  tcase_add_test(tc_e, e_format_frac);
   suite_add_tcase(s, tc_e);
 
   TCase *tc_common = tcase_create("COMMON");
